@@ -18,35 +18,7 @@ var promise;
 var Session = /** @class */ (function () {
 	function Session() {
 		var _this = this;
-		//var csvBtn = document.getElementById("csv_button");
-        //csvBtn.addEventListener("click", function (e) { return _this.run(); });
-
-        //document.getElementById('input-file').addEventListener('change', getFile)
         document.getElementById('input-file').addEventListener('change', _this.run)
-    }
-    
-    // reading a file
-    function getFile(event) {
-        const input = event.target
-      if ('files' in input && input.files.length > 0) {
-          /*placeFileContent(
-          document.getElementById('canvas'),
-          input.files[0])*/
-          
-          // my code
-          console.log("start of getFile")
-          console.log(input.files[0])
-
-          promise = readFileContent(input.files[0]).then(content => {
-                text = content
-                console.log("in readFileContent: " + text)
-                
-          }).catch(error => console.log(error))
-          
-          console.log("end of getFile: ")
-          console.log(promise)
-          return promise
-      }
     }
     
     function readFileContent(file) {
@@ -64,47 +36,48 @@ var Session = /** @class */ (function () {
 		means = [];
 		assignments = [];
 
-        // text = document.getElementById("csv_contents").value;
+        const input = event.target
+        if ('files' in input && input.files.length > 0) {
+            promise = readFileContent(input.files[0]).then(content => {
 
-        console.log("calling getFile")
-        promise = getFile(event)
-        console.log("in run():")
-        console.log(promise)
-        setTimeout(()=>{
-            console.log("in run() with timeout:")
-            console.log(promise)
-        },1000);
+                // read has succesfully occurred
+
+                text = content
+                console.log("in readFileContent: \n" + text)
+                
+                var allData = text.split('\n');
+
+                for(var i = 0; i < allData.length; i++) {
+                    var temp = allData[i].split(',');
+                    allData[i] = temp;
+                }
         
-		/*var allData = text.split('\n');
+                var X = [];
+                var Y = [];
+        
+                console.log('allData')
+                for(var i = 1; i < allData.length; i++) {
+                    console.log(allData[i]);
+                    var temp = [];
+                    for(var j = 1; j < allData[i].length; j++) {
+                        if (j == YCOLUMN) {
+                            Y.push(allData[i][j]);
+                        } else {
+                            temp.push(parseFloat(allData[i][j]));
+                        }
+                    }
+                    X.push(temp);
+                }
+        
+                console.log('Y')
+                console.log(Y)
+                console.log('X')
+                console.log(X)
+                data = X
+                kmeans(2)
 
-		for(var i = 0; i < allData.length; i++) {
-			var temp = allData[i].split(',');
-			allData[i] = temp;
-		}
-
-		var X = [];
-		var Y = [];
-
-		console.log('allData')
-		for(var i = 1; i < allData.length; i++) {
-			console.log(allData[i]);
-			var temp = [];
-			for(var j = 1; j < allData[i].length; j++) {
-				if (j == YCOLUMN) {
-					Y.push(allData[i][j]);
-				} else {
-					temp.push(parseFloat(allData[i][j]));
-				}
-			}
-			X.push(temp);
-		}
-
-		console.log('Y')
-		console.log(Y)
-		console.log('X')
-		console.log(X)
-		data = X
-		kmeans(2)*/
+            }).catch(error => console.log(error))
+        }
 	};
 	return Session;
 }());
