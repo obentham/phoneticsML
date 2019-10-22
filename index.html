@@ -10,18 +10,15 @@
         <h1>Phonetics with Machine Learning</h1>
 
         <div>
-            <label for="input-file">Specify a .csv file:</label><br>
-            <input type="file" accept=".csv" id="input-file">
+            <label for="inputFile">Specify a .csv file:</label><br>
+            <input type="file" accept=".csv" id="inputFile"><br><br>
+            <label for="inputK">How many clusters?</label><br>            
+            <input type="number" value="5" id="inputK"><br><br>
+            <input type="button" value="run" onclick="run()">
         </div>
-
-        <br>
-        <button id="run_button">Run Clustering Algorithm</button>
+        <p id="output"></p>
     
-        <br>
-        <br>
-        <div id="results"><br></div>
-
-        <br>
+        <div id="results">RESULTS</div> <div id="finished"></div>
         <canvas id="canvas" width="700" height="700"></canvas>
 
     <script src="index.js"></script>

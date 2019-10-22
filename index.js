@@ -1,3 +1,8 @@
+var output = document.getElementById("output");
+var inputFile = document.getElementById("inputFile");
+var rawInputData = ""
+var k = 5
+
 // Global variables
 
 const YCOLUMN = 1
@@ -7,103 +12,112 @@ var DATABORDER = .05 	// proportion of gap between graph and data in graph
 var AXIS_TICK_SIZE = 10
 var HEIGHT = 700
 var WIDTH = 700
-var COLORS = ['red','blue','green','orange','purple']
-
+var COLORS = ['red','blue','green','orange','purple','gray','navy','maroon', 'DarkGoldenRod', 'coral', 'darkorchid']
 
 var canvas; 
 var ctx;
 var data;
+var plotData
 var labels;
 var means = [];
 var assignments = [];
+var plotDataExtremes;
+var plotDataRange;
 var dataExtremes;
 var dataRange;
 
-var promise;
+canvas = document.getElementById('canvas');
+ctx = canvas.getContext('2d');
+setupGraph();
 
-var Session = /** @class */ (function () {
-	function Session() {
-		var _this = this;
-		document.getElementById('input-file').addEventListener('change', _this.run)
-		document.getElementById('run_button').addEventListener('click', console.log('click'))
+inputFile.addEventListener("change", function () {
+	rawInputData = ""
+	if (this.files && this.files[0]) {
+		var myFile = this.files[0];
+		var reader = new FileReader();
+		reader.addEventListener('load', function (e) {
+			rawInputData = e.target.result;
+		});
+		reader.readAsText(myFile);
+	}   
+});
+
+function run() {
+	// exits if file hasn't been provided
+	if(rawInputData == "") {return}
+	text = rawInputData
+	k = document.getElementById("inputK").value;
+	// console.log(rawInputData);
+	// console.log(k);
+
+	data = [];
+	means = [];
+	assignments = [];
+	var allData = text.split('\n');
+
+	for(var i = 0; i < allData.length; i++) {
+		var temp = allData[i].split(',');
+		allData[i] = temp;
 	}
-	
-	function readFileContent(file) {
-		const reader = new FileReader()
-	  return new Promise((resolve, reject) => {
-		reader.onload = event => resolve(event.target.result)
-		reader.onerror = error => reject(error)
-		reader.readAsText(file)
-	  })
-	}
 
-	Session.prototype.run = function (event) {
-
-		data = [];
-		means = [];
-		assignments = [];
-
-		const input = event.target
-		if ('files' in input && input.files.length > 0) {
-			promise = readFileContent(input.files[0]).then(content => {
-
-				// read has succesfully occurred
-
-				text = content
-				//console.log("in readFileContent: \n" + text)
-				
-				var allData = text.split('\n');
-
-				for(var i = 0; i < allData.length; i++) {
-					var temp = allData[i].split(',');
-					allData[i] = temp;
-				}
-		
-				var X = [];
-				var Y = [];
-		
-				//console.log('allData')
-				for(var i = 1; i < allData.length; i++) {
-					//console.log(allData[i]);
-					var temp = [];
-					for(var j = 1; j < allData[i].length; j++) {
-						if (j == YCOLUMN) {
-							Y.push(allData[i][j]);
-						} else {
-							temp.push(parseFloat(allData[i][j]));
-						}
-					}
-					X.push(temp);
-				}
-		
-				/*console.log('Y')
-				console.log(Y)
-				console.log('X')
-				console.log(X)*/
-
-				data = X
-				labels = Y
-				kmeans(5)
-			}).catch(error => console.log(error))
+	var X = [];
+	var Y = [];
+	// console.log('allData')
+	for(var i = 1; i < allData.length; i++) {
+		// console.log(allData[i]);
+		var temp = [];
+		for(var j = 1; j < allData[i].length; j++) {
+			if (j == YCOLUMN) {
+				Y.push(allData[i][j]);
+			} else {
+				temp.push(parseFloat(allData[i][j]));
+			}
 		}
-	};
-	return Session;
-}());
+		X.push(temp);
+	}
 
-function kmeans(k) {
-	setup(k)
+	// console.log('Y')
+	// console.log(Y)
+	// console.log('X')
+	// console.log(X)
+
+	data = X
+	labels = Y
+
+	console.log('calling kmeans with k = ' + k)
+	kmeans(k)
 }
 
-function setup(k) {
-
-	dataExtremes = getDataExtremes(data);
+function kmeans(k) {
+	plotDataExtremes = getDataExtremes(data, false);
+	plotDataRange = getDataRanges(plotDataExtremes);
+	data = normalize(data)
+	dataExtremes = getDataExtremes(data, true);
 	dataRange = getDataRanges(dataExtremes);
 	means = initMeans(k);
 
 	makeAssignments();
 	draw();
 
-	setTimeout(run, DRAWDELAY);
+	setTimeout(run_kmeans, DRAWDELAY);
+}
+
+function normalize(data) {
+	// console.log('data extremes and range')
+	// console.log(plotDataExtremes)
+	// console.log(plotDataRange)
+	var normalized_data = []
+
+	for (var row in data){
+		var point = data[row]
+		var newPoint = []
+		for (var col in point) {
+			var val = point[col]
+			newPoint.push((val - plotDataExtremes[col].min)/ plotDataRange[col])
+		}
+		normalized_data.push(newPoint)
+	}
+	return normalized_data
 }
 
 function getDataRanges(extremes) {
@@ -115,7 +129,7 @@ function getDataRanges(extremes) {
 	return ranges;
 }
 
-function getDataExtremes(points) {
+function getDataExtremes(points, normalized) {
 	var extremes = [];
 
 	for (var i in data) {
@@ -134,19 +148,25 @@ function getDataExtremes(points) {
 		}
 	}
 
-	// add data border by pushing out extremes
-	for (var dimension in extremes) {
-		extremes[dimension].min -= DATABORDER * extremes[dimension].min
-		extremes[dimension].max += DATABORDER * extremes[dimension].max
+	if (normalized == true) {
+		// add data border by pushing out extremes
+		for (var dimension in extremes) {
+			extremes[dimension].min = 0 - DATABORDER
+			extremes[dimension].max = 1 + DATABORDER
+		}
+	} else {
+		// add data border by pushing out extremes
+		for (var dimension in extremes) {
+			extremes[dimension].min -= DATABORDER * extremes[dimension].min
+			extremes[dimension].max += DATABORDER * extremes[dimension].max
+		}
 	}
+	console.log(extremes)
 
 	return extremes;
 }
 
 function initMeans(k) {
-	if ( ! k ) {
-		k = 3;
-	}
 	while (k--) {
 		var mean = [];
 
@@ -211,8 +231,8 @@ function moveMeans() {
 		// console.log(counts[mean_index]);
 		if ( 0 === counts[mean_index] )  {
 			sums[mean_index] = means[mean_index];
-			console.log("Mean with no points");
-			console.log(sums[mean_index]);
+			// console.log("Mean with no points");
+			// console.log(sums[mean_index]);
 
 			for (var dimension in dataExtremes) {
 				sums[mean_index][dimension] = dataExtremes[dimension].min + ( Math.random() * dataRange[dimension] );
@@ -232,27 +252,27 @@ function moveMeans() {
 	return moved;
 }
 
-function run() {
+function run_kmeans() {
 	var moved = moveMeans();
 	draw();
 
 	if (moved) {
-		setTimeout(run, DRAWDELAY);
+		setTimeout(run_kmeans, DRAWDELAY);
 	} else {
 		// algorithm has found clusters
-		document.getElementById('results').innerHTML = "Done!"
+		document.getElementById('finished').innerHTML = "Done!"
 	}
 }
 
 function draw() {
-	/*console.log('data')
-	console.log(data)
-	console.log('labels')
-	console.log(labels)
-	console.log('assignments')
-	console.log(assignments)    
-	console.log('means')
-	console.log(means)*/
+	// console.log('data')
+	// console.log(data)
+	// console.log('labels')
+	// console.log(labels)
+	// console.log('assignments')
+	// console.log(assignments)    
+	// console.log('means')
+	// console.log(means)
 
 	// clear canvas
 	ctx.clearRect(0,0,WIDTH, HEIGHT);
@@ -267,7 +287,7 @@ function draw() {
 	drawData()
 
 	// draw means
-	drawMeans()
+	// drawMeans()
 }
 
 function drawData() {
@@ -335,10 +355,10 @@ function drawMeans() {
 
 		ctx.fillStyle = COLORS[i]
 		ctx.strokeStyle = 'black'
-		ctx.lineWidth = 2
+		ctx.lineWidth = 0
 		ctx.translate(x, y);
 		ctx.beginPath();
-		ctx.arc(0, 0, 5, 0, Math.PI*2, true);
+		ctx.arc(0, 0, 3, 0, Math.PI*2, true);
 		ctx.fill();
 		ctx.stroke()
 		ctx.closePath();
@@ -448,13 +468,13 @@ function labelAxes() {
 	ctx.globalAlpha = 1;
 
 	// x-axis left
-	ctx.fillText(Math.round(dataExtremes[1]["max"]), GRAPHBORDER - 10, HEIGHT - GRAPHBORDER + AXIS_TICK_SIZE + 15);
+	ctx.fillText(Math.round(plotDataExtremes[1]["max"]), GRAPHBORDER - 10, HEIGHT - GRAPHBORDER + AXIS_TICK_SIZE + 15);
 	// x-axis right
-	ctx.fillText(Math.round(dataExtremes[1]["min"]), WIDTH - GRAPHBORDER - 10, HEIGHT - GRAPHBORDER + AXIS_TICK_SIZE + 15);
+	ctx.fillText(Math.round(plotDataExtremes[1]["min"]), WIDTH - GRAPHBORDER - 10, HEIGHT - GRAPHBORDER + AXIS_TICK_SIZE + 15);
 	// y-axis top
-	ctx.fillText(Math.round(dataExtremes[0]["min"]), GRAPHBORDER - AXIS_TICK_SIZE - 30, GRAPHBORDER + 5);
+	ctx.fillText(Math.round(plotDataExtremes[0]["min"]), GRAPHBORDER - AXIS_TICK_SIZE - 30, GRAPHBORDER + 5);
 	// y-axis bottom
-	ctx.fillText(Math.round(dataExtremes[0]["max"]), GRAPHBORDER - AXIS_TICK_SIZE - 30, HEIGHT - GRAPHBORDER + 5);
+	ctx.fillText(Math.round(plotDataExtremes[0]["max"]), GRAPHBORDER - AXIS_TICK_SIZE - 30, HEIGHT - GRAPHBORDER + 5);
 
 	// x-axis label
 	ctx.fillText("F2", WIDTH/2 - 10, HEIGHT - GRAPHBORDER + AXIS_TICK_SIZE + 15);
@@ -463,9 +483,3 @@ function labelAxes() {
 
 	ctx.restore();
 }
-
-// start the app
-canvas = document.getElementById('canvas');
-ctx = canvas.getContext('2d');
-setupGraph();
-new Session();
