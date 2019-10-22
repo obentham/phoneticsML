@@ -16,7 +16,7 @@ If you're providing your own data, the format of the input should be a .csv file
  bet    | ɛ     | 564 | 1749 |
  bat    | æ     | 633 | 1716 |
  but    | ʌ     | 584 | 1188 |
- Bert   | ɚ     | 414 | 1208 |
+ Bert   | ə     | 414 | 1208 |
  boot   | u     | 356 | 1302 |
  book   | ʊ     | 483 | 1049 |
  boat   | o     | 491 | 1093 |
