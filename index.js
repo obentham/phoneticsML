@@ -6,13 +6,13 @@ var k = 5
 // Global variables
 
 const YCOLUMN = 1
-var DRAWDELAY = 1000
+var DRAWDELAY = 300
 var GRAPHBORDER = 60 	// distance between graph and canvas
 var DATABORDER = .05 	// proportion of gap between graph and data in graph
 var AXIS_TICK_SIZE = 10
 var HEIGHT = 700
 var WIDTH = 700
-var COLORS = ['red','blue','green','orange','purple','gray','navy','maroon', 'DarkGoldenRod', 'coral', 'darkorchid']
+var COLORS = ['red','blue','green','orange','purple','gray','navy','maroon', 'black', 'DarkGoldenRod', 'coral', 'deeppink']
 
 var canvas; 
 var ctx;
@@ -47,6 +47,7 @@ function run() {
 	if(rawInputData == "") {return}
 	text = rawInputData
 	k = document.getElementById("inputK").value;
+	DRAWDELAY = document.getElementById("inputDelay").value;
 	// console.log(rawInputData);
 	// console.log(k);
 
@@ -85,6 +86,7 @@ function run() {
 	labels = Y
 
 	console.log('calling kmeans with k = ' + k)
+	document.getElementById('results').innerHTML = "RESULTS"
 	kmeans(k)
 }
 
@@ -260,7 +262,7 @@ function run_kmeans() {
 		setTimeout(run_kmeans, DRAWDELAY);
 	} else {
 		// algorithm has found clusters
-		document.getElementById('finished').innerHTML = "Done!"
+		document.getElementById('results').innerHTML = "RESULTS Done!"
 	}
 }
 
