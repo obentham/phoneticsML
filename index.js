@@ -2,16 +2,17 @@ var output = document.getElementById("output");
 var inputFile = document.getElementById("inputFile");
 var rawInputData = ""
 var k = 5
+var showMeans = true
+var DRAWDELAY = 300
+
 
 // Global variables
-
 const YCOLUMN = 1
-var DRAWDELAY = 300
 var GRAPHBORDER = 60 	// distance between graph and canvas
-var DATABORDER = .05 	// proportion of gap between graph and data in graph
+var DATABORDER = .05 	// proportion of gap between graph edge and data in graph
 var AXIS_TICK_SIZE = 10
-var HEIGHT = 700
-var WIDTH = 700
+var HEIGHT = 750
+var WIDTH = 750
 var COLORS = ['red','blue','green','orange','purple','gray','navy','maroon', 'black', 'DarkGoldenRod', 'coral', 'deeppink']
 
 var canvas; 
@@ -45,8 +46,12 @@ inputFile.addEventListener("change", function () {
 function run() {
 	// exits if file hasn't been provided
 	if(rawInputData == "") {return}
-	text = rawInputData
 	k = document.getElementById("inputK").value;
+	if(k < 1 || k > COLORS.length) {return}
+	document.getElementById('results').innerHTML = "RESULTS"
+	radios = document.getElementsByName('showMean')
+	showMeans = radios[0].checked == true
+	text = rawInputData
 	DRAWDELAY = document.getElementById("inputDelay").value;
 	// console.log(rawInputData);
 	// console.log(k);
@@ -86,7 +91,6 @@ function run() {
 	labels = Y
 
 	console.log('calling kmeans with k = ' + k)
-	document.getElementById('results').innerHTML = "RESULTS"
 	kmeans(k)
 }
 
@@ -173,7 +177,7 @@ function initMeans(k) {
 		var mean = [];
 
 		for (var dimension in dataExtremes) {
-			mean[dimension] = dataExtremes[dimension].min + ( Math.random() * dataRange[dimension] );
+			mean[dimension] = dataExtremes[dimension].min + (Math.random() * dataRange[dimension]);
 		}
 		means.push(mean);
 	}
@@ -283,13 +287,15 @@ function draw() {
 	labelAxes();
 	
 	// draw lines between points and mean
-	//drawLines()
+	// drawLines()
 	
 	// draw points
 	drawData()
 
 	// draw means
-	// drawMeans()
+	if(showMeans) {
+		drawMeans()
+	}
 }
 
 function drawData() {
@@ -342,8 +348,8 @@ function drawMeans() {
 		var point = means[i];
 
 		// column 0 (F1) actually goes on y and column 1 (F2) goes on x
-		var y = (point[0] - dataExtremes[0].min + 1) * (WIDTH / (dataRange[0] + 2) );
-		var x = (point[1] - dataExtremes[1].min + 1) * (HEIGHT / (dataRange[1] + 2) );
+		var y = (point[0] - dataExtremes[0].min) * (WIDTH / (dataRange[0]) );
+		var x = (point[1] - dataExtremes[1].min) * (HEIGHT / (dataRange[1]) );
 
 		// flip x to get axes alligned correctly, y is already reversed because of web coordinates
 		x = WIDTH - x
@@ -360,7 +366,7 @@ function drawMeans() {
 		ctx.lineWidth = 0
 		ctx.translate(x, y);
 		ctx.beginPath();
-		ctx.arc(0, 0, 3, 0, Math.PI*2, true);
+		ctx.arc(0, 0, 5, 0, Math.PI*2, true);
 		ctx.fill();
 		ctx.stroke()
 		ctx.closePath();
@@ -384,12 +390,12 @@ function drawLines() {
 
 		// TODO: redo with flipped y
 		ctx.moveTo(
-			(point[0] - dataExtremes[0].min + 1) * (WIDTH / (dataRange[0] + 2) ),
-			(point[1] - dataExtremes[1].min + 1) * (HEIGHT / (dataRange[1] + 2) )
+			(point[0] - dataExtremes[0].min) * (WIDTH / (dataRange[0]) ),
+			(point[1] - dataExtremes[1].min) * (HEIGHT / (dataRange[1]) )
 		);
 		ctx.lineTo(
-			(mean[0] - dataExtremes[0].min + 1) * (WIDTH / (dataRange[0] + 2) ),
-			(mean[1] - dataExtremes[1].min + 1) * (HEIGHT / (dataRange[1] + 2) )
+			(mean[0] - dataExtremes[0].min) * (WIDTH / (dataRange[0]) ),
+			(mean[1] - dataExtremes[1].min) * (HEIGHT / (dataRange[1]) )
 		);
 		ctx.stroke();
 		ctx.closePath();

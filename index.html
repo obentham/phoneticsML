@@ -17,6 +17,13 @@
             <input type="file" accept=".csv" id="inputFile"><br><br>
             <label for="inputK">How many clusters? 0 < k < 13</label><br>            
             k = <input type="number" value="5" id="inputK"><br><br>
+            
+            Show the mean point of each cluster?
+            <input type="radio" id="yesMean" name="showMean" value="yesMean" checked>
+            <label for="yesMean">Yes</label>
+            <input type="radio" id="noMean" name="showMean" value="noMean">
+            <label for="noMean">No</label><br><br>
+
             <label for="inputDelay">How much time between updates?</label><br>            
             <input type="number" value="300" id="inputDelay">ms (1s = 1000ms)<br><br>
             <input type="button" value="run" onclick="run()">
@@ -24,7 +31,7 @@
         <p id="output"></p>
     
         <div id="results">RESULTS</div>
-        <canvas id="canvas" width="700" height="700"></canvas>
+        <canvas id="canvas" width="750" height="750"></canvas>
 
     <script src="index.js"></script>
 </body>
